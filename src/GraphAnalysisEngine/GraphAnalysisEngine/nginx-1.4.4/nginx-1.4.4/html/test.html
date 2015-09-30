@@ -1,0 +1,126 @@
+<!--参考文档：http://www.d3js.cn-->
+<!--Author: 杨妍喆-->
+<!--Time: 2014年1月-->
+<!--网页内容:通过处理好的json文件，将节点相连，其中不同的颜色反应不同的中心度大小-->
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 10px;
+}
+
+.chord {
+  fill-opacity: .67;
+}
+
+</style>
+<body>
+<script src="d3.v3.min.js"></script>
+<script>
+//声明：以下代码参考系列教程文档：http://www.d3js.cn/： 1、http://www.d3js.cn/?p=68；2、http://www.d3js.cn/?p=73
+//由于从未接触过html,JS和网页的相关知识，所以查询相关资料读懂之后，摘抄的成分很多，希望您可以谅解！
+//但是整个过程均为独立完成
+
+//测试数据
+var matrix = [
+	[11975, 5871, 8916, 2868],
+	[1951,  10048, 2060, 6171],
+	[8010, 16145, 8090, 8045],
+	[1013, 990, 940, 940, 6907]
+	];
+
+//分别设置外围半径和内围半径
+var outerRadius = 960 / 2,
+    innerRadius = outerRadius - 130;
+
+//d3.scale.category是d3里给20中构造新的等级分类，也可建立自己想要的颜色数组
+var fill = d3.scale.category20b();
+
+//初始化弦
+var chord = d3.layout.chord()			//返回chord.groups()与chord.chords()
+    .padding(.04)				//圆环上每部分的间隔
+    .sortSubgroups(d3.descending)		//规定每一行中元素的排列顺序
+    .sortChords(d3.descending);			//规定弦的
+
+//画弦时调用
+var arc = d3.svg.arc()
+    .innerRadius(innerRadius)
+    .outerRadius(innerRadius + 20);
+
+//为圆环添加svg事件
+var svg = d3.select("body").append("svg")
+    .attr("width", outerRadius * 2)		//设置svg的属性
+    .attr("height", outerRadius * 2)
+  .append("g")					//添加g元素，在同一组容器中的元素具有相同的性质，如颜色等
+    .attr("transform", "translate(" + outerRadius + "," + outerRadius + ")");	//由于是以圆形的中心为
+
+//读取json文件
+d3.json("result.json", function(error, imports) 
+{
+  var indexByName = d3.map(),
+      nameByIndex = d3.map(),
+      matrix = [],
+      n = 0;
+
+  // Returns the Flare package name for the given class name.
+  function name(name) {
+    return name.substring(0, name.lastIndexOf(".")).substring(6);
+  }
+
+  // Compute a unique index for each package name.
+  //imports.forEach(function(d) {
+    //if (!indexByName.has(d = name(d.name))) {
+      //nameByIndex.set(n, d);
+      //indexByName.set(d, n++);
+    //}
+  //});
+
+  /*//设置matrix矩阵储存变量
+  imports.forEach(function(d) {
+    var source = indexByName.get(name(d.name)),
+        row = matrix[source];
+    if (!row) {
+     row = matrix[source] = [];
+     for (var i = -1; ++i < n;) row[i] = 0;
+    }
+    d.imports.forEach(function(d) { row[indexByName.get(name(d))]++; });
+  });*/
+
+  chord.matrix(matrix);
+
+  var g = svg.selectAll(".group")
+      .data(chord.groups)
+    .enter().append("g")
+      .attr("class", "group");
+
+  g.append("path")
+      .style("fill", function(d) { return fill(d.index); })
+      .style("stroke", function(d) { return fill(d.index); })
+      .attr("d", arc);
+
+  g.append("text")
+      .each(function(d) { d.angle = (d.startAngle + d.endAngle) / 2; })
+      .attr("dy", ".35em")
+      .attr("transform", function(d) {
+        return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+            + "translate(" + (innerRadius + 26) + ")"
+            + (d.angle > 3.1415 ? "rotate(180)" : "");
+      })
+      .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+      .text(function(d) { return nameByIndex.get(d.index); });
+
+  svg.selectAll(".chord")		//将数据生成svg事件，进行绘图
+      .data(chord.chords)
+    .enter().append("path")
+      .attr("class", "chord")
+      .style("stroke", function(d) { return d3.rgb(fill(d.source.index)).darker(); })
+      .style("fill", function(d) { return fill(d.source.index); })
+      .attr("d", d3.svg.chord().radius(innerRadius));
+
+});
+
+d3.select(self.frameElement).style("height", outerRadius * 2 + "px");
+
+</script>

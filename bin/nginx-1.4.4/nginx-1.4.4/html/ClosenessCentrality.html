@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="author" content = "杨妍喆">
+<meta name="keyword" content = "图论,清华大学,接近中心度">
+<meta name="description" content="网页提供了接近中心度的可视化表达">
+<title>ClosenessCentrality</title>
+<style type = "text/css">													
+.node {		
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+}
+</style>
+</head>
+<body>
+
+<script src="d3.v3.min.js"></script>
+
+<script>
+//声明：以下代码结合开源示例：http://bl.ocks.org/mbostock/4062045，并加以应用
+//由于从未接触过html,JS和网页的相关知识，所以查询相关资料读懂之后，摘抄的成分很多，希望您可以谅解！
+//但是整个过程均为独立完成
+
+var width = 1500,
+    height = 1200;
+
+var color = d3.scale.category20c();
+
+var force = d3.layout.force()
+    .charge(-50)							//可以考虑在这里设置按钮，来调节斥力，而不用改动代码
+    .linkDistance(30)
+    .size([width, height]);			//设置有效空间大小
+
+//添加svg事件
+var svg = d3.select("body").append("svg")	
+    .attr("width", width)
+    .attr("height", height);
+		
+//接近中心度的图像
+//读取json文件
+d3.json("ClosenessCentrality.json", function(error, graph) {			
+  force
+      .nodes(graph.nodes)		//加载节点数据
+      .links(graph.links)		//加载边数据
+      .start();				//设置生效
+
+  var link = svg.selectAll(".link")	//初始化svg事件中的线条变量
+      .data(graph.links) 
+    .enter().append("line")
+      .attr("class", "link")
+      .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+
+  var node = svg.selectAll(".node")		//创建svg圆形作为节点
+      .data(graph.nodes)
+    .enter().append("circle")
+      .attr("class", "node")
+      .attr("r", 4)
+      .style("fill", function(d) { return color(d.group); })
+      .call(force.drag);			//设置可以拖动
+
+  node.append("title")				//添加标题元素
+      .text(function(d) { return d.name; });
+	  
+  link.append("title")				//尝试：给线添加标题元素						      .text(function(d){return d.value;});
+
+  force.on("tick", function() {			//调用D3库中的force函数
+    link.attr("x1", function(d) { return d.source.x/2.0; })
+        .attr("y1", function(d) { return d.source.y/2.0; })
+        .attr("x2", function(d) { return d.target.x/2.0; })
+        .attr("y2", function(d) { return d.target.y/2.0; });
+
+    node.attr("cx", function(d) { return d.x/2.0; })
+        .attr("cy", function(d) { return d.y/2.0; });
+  });
+});
+</script>
+</body>
+</html>

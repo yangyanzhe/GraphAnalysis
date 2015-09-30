@@ -1,0 +1,6 @@
+欢迎使用“图分析”！
+Contact Us:	刘桐彤 2012013331 Tel:18800102016 Email:jshaltt7@163.com
+		杨妍喆 2012013323 Tel:18010045724 Email:yangyanzhe@126.com
+使用须知：
+1、请确保您已经运行nginx-1.4.4/nginx-1.4.4文件夹下的nginx.exe程序；
+2、在每项函数中，请“导出”后再点击查看。
